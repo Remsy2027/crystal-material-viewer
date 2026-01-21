@@ -758,6 +758,47 @@
             color: #4f46e5;
         }
 
+        /* Demo Cube */
+        #demo-cube {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .demo-cube-message {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 400px;
+        }
+
+        .demo-cube-message h3 {
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .demo-cube-message p {
+            margin-bottom: 15px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .demo-cube-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
         /* Footer */
         #footer {
             padding: 16px 24px;
@@ -978,9 +1019,35 @@
         <div id="canvas-container"></div>
 
         <!-- Loading Overlay -->
-        <div id="loading" class="loading" style="display: none;">
+        <div id="loading" class="loading" style="display: block;">
             <div class="spinner"></div>
-            <div>Loading model...</div>
+            <div>Initializing viewer...</div>
+        </div>
+
+        <!-- Demo Cube Fallback -->
+        <div id="demo-cube">
+            <div class="demo-cube-message">
+                <h3>No Model Loaded</h3>
+                <p>The default model could not be loaded due to browser security restrictions. Please:</p>
+                <ol style="text-align: left; margin: 10px 0 15px 20px; font-size: 13px;">
+                    <li>Upload your own GLB/GLTF file using the "Upload GLB" button</li>
+                    <li>Or run a local server to load the default files</li>
+                </ol>
+                <div class="demo-cube-buttons">
+                    <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        Upload Model
+                    </button>
+                    <button class="btn" onclick="createDemoCube()">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Create Demo Cube
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Error Message -->
@@ -992,7 +1059,7 @@
             <div class="status-panel">
                 <div class="status-row">
                     <span class="status-label">Model</span>
-                    <span id="model-status" class="status-value">No file loaded</span>
+                    <span id="model-status" class="status-value">No model loaded</span>
                 </div>
                 <div class="status-row">
                     <span class="status-label">Crystals</span>
@@ -1227,6 +1294,10 @@
         let isHDRIChanging = false;
         let modelPointLights = [];
 
+        // Default file paths
+        const DEFAULT_MODEL_PATH = 'models/crystal-chandelier-lamp.glb';
+        const DEFAULT_HDRI_PATH = 'hdri/neutral.hdr';
+
         // Initialize the application
         function init() {
             const container = document.getElementById('canvas-container');
@@ -1297,6 +1368,11 @@
             // Start animation loop
             animate();
 
+            // Try to load default model, show fallback if it fails
+            setTimeout(() => {
+                tryLoadDefaultModel();
+            }, 1000);
+            
             // Show GUI by default
             toggleGUI();
         }
@@ -1381,6 +1457,228 @@
             renderer.setSize(container.clientWidth, container.clientHeight);
         }
 
+        // Try to load default model with CORS handling
+        function tryLoadDefaultModel() {
+            const loadingEl = document.getElementById('loading');
+            const demoCubeEl = document.getElementById('demo-cube');
+            
+            // First check if we're running from file:// protocol
+            if (window.location.protocol === 'file:') {
+                console.log('Running from file:// protocol - cannot load external files due to CORS');
+                
+                // Hide loading and show demo cube fallback
+                loadingEl.style.display = 'none';
+                demoCubeEl.style.display = 'flex';
+                
+                // Update status
+                document.getElementById('model-status').textContent = 'File protocol - upload needed';
+                document.getElementById('crystal-status').textContent = '0 found';
+                document.getElementById('hdri-status').textContent = 'Disabled';
+                
+                showMessage('Running from file:// - Please upload a model or run a local server', 'warning');
+                return;
+            }
+            
+            // Try to load the model from the default path
+            loadModelFromPath(DEFAULT_MODEL_PATH, function() {
+                // Success - hide loading
+                loadingEl.style.display = 'none';
+                demoCubeEl.style.display = 'none';
+                
+                // Try to load HDRI
+                setTimeout(() => {
+                    loadHDRIFromPath(DEFAULT_HDRI_PATH, function() {
+                        showMessage('Default model and HDRI loaded successfully!', 'success');
+                    }, function() {
+                        // HDRI failed, but that's okay
+                        console.log('HDRI not loaded, using default lighting');
+                    });
+                }, 500);
+            }, function(error) {
+                // Model failed to load
+                console.log('Default model not found, showing fallback');
+                
+                // Hide loading and show demo cube fallback
+                loadingEl.style.display = 'none';
+                demoCubeEl.style.display = 'flex';
+                
+                // Update status
+                document.getElementById('model-status').textContent = 'No model loaded';
+                document.getElementById('crystal-status').textContent = '0 found';
+                document.getElementById('hdri-status').textContent = 'Disabled';
+                
+                showMessage('Default model not found. Please upload your own model.', 'info');
+            });
+        }
+
+        function loadModelFromPath(path, onSuccess, onError) {
+            const loader = new THREE.GLTFLoader();
+
+            try {
+                const dracoLoader = new THREE.DRACOLoader();
+                dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+                dracoLoader.setDecoderConfig({ type: 'js' });
+                loader.setDRACOLoader(dracoLoader);
+            } catch (err) {
+                console.warn('Draco loader setup failed, continuing without it');
+            }
+
+            loader.load(
+                path,
+                function(gltf) {
+                    // Remove previous model
+                    if (currentModel) {
+                        scene.remove(currentModel);
+                        crystalMeshes = [];
+                        modelPointLights = [];
+                    }
+
+                    const model = gltf.scene;
+                    model.name = 'uploadedModel';
+                    currentModel = model;
+
+                    let crystalCount = 0;
+                    
+                    // Apply crystal material to meshes named "Crystal"
+                    model.traverse(function(child) {
+                        if (child.isMesh) {
+                            const meshName = child.name.toLowerCase();
+                            if (meshName.includes('crystal')) {
+                                crystalCount++;
+                                
+                                if (Array.isArray(child.material)) {
+                                    // Multiple materials
+                                    if (child.material.length > 1) {
+                                        child.material[1] = crystalMaterial.clone();
+                                        crystalMeshes.push({
+                                            mesh: child,
+                                            primitiveIndex: 1
+                                        });
+                                    } else {
+                                        child.material[0] = crystalMaterial.clone();
+                                        crystalMeshes.push({
+                                            mesh: child,
+                                            primitiveIndex: 0
+                                        });
+                                    }
+                                } else {
+                                    // Single material
+                                    child.material = crystalMaterial.clone();
+                                    crystalMeshes.push({
+                                        mesh: child,
+                                        primitiveIndex: -1
+                                    });
+                                }
+                                
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                            }
+                        }
+                    });
+
+                    // Center and scale model
+                    const box = new THREE.Box3().setFromObject(model);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 2 / maxDim;
+
+                    model.scale.setScalar(scale);
+                    model.position.sub(center.multiplyScalar(scale));
+
+                    scene.add(model);
+
+                    // Update status
+                    const modelName = path.split('/').pop();
+                    document.getElementById('model-status').textContent = modelName;
+                    document.getElementById('crystal-status').textContent = `${crystalCount} found`;
+                    
+                    if (onSuccess) onSuccess();
+                },
+                function(progress) {
+                    // Loading progress
+                    console.log('Model loading progress:', progress);
+                },
+                function(error) {
+                    console.error('Error loading model:', error);
+                    if (onError) onError(error);
+                }
+            );
+        }
+
+        function loadHDRIFromPath(path, onSuccess, onError) {
+            const rgbeLoader = new THREE.RGBELoader();
+            
+            rgbeLoader.load(
+                path,
+                function(texture) {
+                    hdriTexture = pmremGenerator.fromEquirectangular(texture).texture;
+                    texture.dispose();
+                    enableHDRI();
+                    
+                    document.getElementById('hdri-status').textContent = 'Enabled';
+                    
+                    if (onSuccess) onSuccess();
+                },
+                function(progress) {
+                    // HDRI loading progress
+                    console.log('HDRI loading progress:', progress);
+                },
+                function(error) {
+                    console.error('Error loading HDRI:', error);
+                    if (onError) onError(error);
+                }
+            );
+        }
+
+        // Create a demo crystal cube for testing
+        function createDemoCube() {
+            const loadingEl = document.getElementById('loading');
+            const demoCubeEl = document.getElementById('demo-cube');
+            
+            // Show loading
+            loadingEl.style.display = 'block';
+            demoCubeEl.style.display = 'none';
+            
+            // Remove previous model
+            if (currentModel) {
+                scene.remove(currentModel);
+                crystalMeshes = [];
+                modelPointLights = [];
+            }
+
+            // Create a crystal-like geometry (icosahedron for more facets)
+            const geometry = new THREE.IcosahedronGeometry(1, 3);
+            
+            // Create mesh with crystal material
+            const cube = new THREE.Mesh(geometry, crystalMaterial.clone());
+            cube.name = 'demoCrystal';
+            cube.castShadow = true;
+            cube.receiveShadow = true;
+            
+            // Position it nicely
+            cube.position.y = 0.5;
+            
+            scene.add(cube);
+            currentModel = cube;
+            
+            // Store as crystal mesh
+            crystalMeshes.push({
+                mesh: cube,
+                primitiveIndex: -1
+            });
+
+            // Update status
+            document.getElementById('model-status').textContent = 'Demo Crystal Cube';
+            document.getElementById('crystal-status').textContent = '1 found';
+            
+            // Hide loading
+            loadingEl.style.display = 'none';
+            
+            // Show success message
+            showMessage('Demo crystal cube created! Try the material presets.', 'success');
+        }
+
         // File Upload Handling
         function handleFileUpload(event) {
             const file = event.target.files[0];
@@ -1388,10 +1686,12 @@
 
             const uploadBtn = document.getElementById('upload-btn');
             const loadingEl = document.getElementById('loading');
+            const demoCubeEl = document.getElementById('demo-cube');
             const errorMsg = document.getElementById('error-msg');
 
             // Show loading state
             loadingEl.style.display = 'block';
+            demoCubeEl.style.display = 'none';
             uploadBtn.disabled = true;
             errorMsg.style.display = 'none';
 
@@ -1850,6 +2150,8 @@
                 errorMsg.style.background = 'rgba(239, 68, 68, 0.9)';
             } else if (type === 'success') {
                 errorMsg.style.background = 'rgba(16, 185, 129, 0.9)';
+            } else if (type === 'warning') {
+                errorMsg.style.background = 'rgba(245, 158, 11, 0.9)';
             } else {
                 errorMsg.style.background = 'rgba(59, 130, 246, 0.9)';
             }
