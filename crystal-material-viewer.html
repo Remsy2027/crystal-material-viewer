@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crystal GLB Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+            background: #0a0a0a;
+            color: #ffffff;
+            transition: background-color 0.3s ease;
+        }
+
+        body.day-mode {
+            background: #ffffff;
+            color: #1a1a1a;
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Header */
+        #header {
+            padding: 16px 24px;
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            position: relative;
+        }
+
+        body.day-mode #header {
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 20px;
+            height: 20px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        body.day-mode h1 {
+            color: #1a1a1a;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        body.day-mode .btn {
+            background: rgba(0, 0, 0, 0.05);
+            color: #1a1a1a;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        body.day-mode .btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #0da271 0%, #047852 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border: none;
+        }
+
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #dd8e0a 0%, #c06805 100%);
+        }
+
+        .icon {
+            width: 18px;
+            height: 18px;
+            stroke-width: 2;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        /* Canvas Container */
+        #canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Sidebar GUI */
+        #gui-container {
+            position: absolute;
+            top: 100px;
+            right: 24px;
+            width: 380px;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(30px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            z-index: 90;
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        body.day-mode #gui-container {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        #gui-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #gui-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #gui-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        body.day-mode #gui-container::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        /* GUI Sections */
+        .gui-section {
+            padding: 0;
+        }
+
+        .gui-section:not(:last-child) {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body.day-mode .gui-section:not(:last-child) {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .gui-header {
+            padding: 20px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+            user-select: none;
+        }
+
+        body.day-mode .gui-header {
+            color: #1a1a1a;
+        }
+
+        .gui-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        body.day-mode .gui-header:hover {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .gui-header.active {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        body.day-mode .gui-header.active {
+            background: rgba(102, 126, 234, 0.08);
+        }
+
+        .gui-arrow {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0.7;
+        }
+
+        .gui-header.active .gui-arrow {
+            transform: rotate(90deg);
+            opacity: 1;
+        }
+
+        .gui-content {
+            padding: 0 24px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .gui-header.active + .gui-content {
+            padding: 0 24px 24px 24px;
+            max-height: 1000px;
+        }
+
+        /* GUI Controls */
+        .gui-control {
+            margin-bottom: 20px;
+        }
+
+        .gui-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        body.day-mode .gui-label {
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        .gui-slider-container {
+            position: relative;
+            margin-top: 4px;
+        }
+
+        .gui-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            position: relative;
+        }
+
+        body.day-mode .gui-slider {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .gui-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s, border 0.2s;
+        }
+
+        .gui-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .gui-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s, border 0.2s;
+        }
+
+        .gui-slider::-moz-range-thumb:hover {
+            transform: scale(1.1);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .gui-color {
+            width: 100%;
+            height: 40px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        body.day-mode .gui-color {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .gui-color::-webkit-color-swatch {
+            border-radius: 8px;
+            border: none;
+        }
+
+        .gui-color::-moz-color-swatch {
+            border-radius: 8px;
+            border: none;
+        }
+
+        /* Toggle Switch */
+        .gui-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px 0;
+        }
+
+        .gui-toggle-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        body.day-mode .gui-toggle-label {
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        .gui-toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 54px;
+            height: 28px;
+        }
+
+        .gui-toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .gui-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.1);
+            transition: .4s;
+            border-radius: 34px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .gui-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 2px;
+            bottom: 2px;
+            background: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        input:checked + .gui-toggle-slider {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+        }
+
+        input:checked + .gui-toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Property Grid */
+        .property-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .property-row {
+            display: grid;
+            grid-template-columns: 120px 1fr auto;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .property-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        body.day-mode .property-label {
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        .property-value {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        body.day-mode .property-value {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .property-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        body.day-mode .property-slider {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .property-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+        }
+
+        .property-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        /* Improved Dropdown */
+        .dropdown-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .dropdown-header {
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        body.day-mode .dropdown-header {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-header:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        body.day-mode .dropdown-header:hover {
+            background: rgba(0, 0, 0, 0.1);
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .dropdown-header.active {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #667eea;
+        }
+
+        .dropdown-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        body.day-mode .dropdown-title {
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        .dropdown-icon {
+            transition: transform 0.3s;
+            opacity: 0.7;
+        }
+
+        .dropdown-header.active .dropdown-icon {
+            transform: rotate(180deg);
+            opacity: 1;
+        }
+
+        .dropdown-content {
+            position: relative;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 0 0 10px 10px;
+            margin-top: -1px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: none;
+        }
+
+        body.day-mode .dropdown-content {
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-top: none;
+        }
+
+        .dropdown-header.active + .dropdown-content {
+            max-height: 400px;
+            padding: 16px;
+        }
+
+        /* Preset Grid */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .preset-button {
+            padding: 12px 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        body.day-mode .preset-button {
+            background: rgba(0, 0, 0, 0.05);
+            color: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .preset-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        body.day-mode .preset-button:hover {
+            background: rgba(0, 0, 0, 0.1);
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .preset-button.active {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        body.day-mode .preset-button.active {
+            background: rgba(102, 126, 234, 0.15);
+            color: #667eea;
+        }
+
+        .preset-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.8;
+        }
+
+        .preset-name {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .action-button {
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        body.day-mode .action-button {
+            background: rgba(0, 0, 0, 0.1);
+            color: #1a1a1a;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .action-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        body.day-mode .action-button:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .action-button.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+
+        .action-button.primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+
+        /* Status Panel */
+        .status-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body.day-mode .status-panel {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .status-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .status-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        body.day-mode .status-label {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .status-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        body.day-mode .status-value {
+            color: #4f46e5;
+        }
+
+        /* Footer */
+        #footer {
+            padding: 16px 24px;
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        body.day-mode #footer {
+            background: rgba(255, 255, 255, 0.9);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .footer-instructions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .instruction-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .instruction-icon {
+            width: 16px;
+            height: 16px;
+            opacity: 0.7;
+        }
+
+        /* Loading State */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 50;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error Message */
+        #error-msg {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: none;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        /* File Input */
+        #file-input, #hdri-input {
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #gui-container {
+                width: 340px;
+                right: 16px;
+                top: 90px;
+            }
+
+            .button-group {
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+
+            .preset-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .property-row {
+                grid-template-columns: 100px 1fr auto;
+                gap: 12px;
+            }
+
+            .footer-instructions {
+                flex-direction: column;
+                gap: 8px;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #header {
+                padding: 12px 16px;
+            }
+
+            .button-group {
+                gap: 6px;
+            }
+
+            .btn span:not(.icon) {
+                display: none;
+            }
+
+            .btn {
+                padding: 10px;
+            }
+
+            #gui-container {
+                width: calc(100vw - 32px);
+                right: 16px;
+                left: 16px;
+            }
+
+            h1 {
+                font-size: 18px;
+            }
+
+            .preset-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="night-mode">
+    <div id="container">
+        <!-- Header -->
+        <div id="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <h1>Crystal Viewer</h1>
+            </div>
+            
+            <div class="button-group">
+                <button id="toggle-gui-btn" class="btn" onclick="toggleGUI()">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                    </svg>
+                    <span>Controls</span>
+                </button>
+                
+                <button id="toggle-mode-btn" class="btn btn-warning" onclick="toggleMode()">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                    <span>Dark</span>
+                </button>
+                
+                <button id="toggle-hdri-btn" class="btn btn-success" onclick="toggleHDRI()">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                    </svg>
+                    <span>HDRI</span>
+                </button>
+                
+                <button id="upload-btn" class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <span>Upload GLB</span>
+                </button>
+                
+                <input type="file" id="file-input" accept=".glb,.gltf" onchange="handleFileUpload(event)">
+                <input type="file" id="hdri-input" accept=".hdr,.exr" onchange="handleHDRIUpload(event)">
+            </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div id="canvas-container"></div>
+
+        <!-- Loading Overlay -->
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <div>Loading model...</div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-msg"></div>
+
+        <!-- GUI Panel -->
+        <div id="gui-container">
+            <!-- Status Panel -->
+            <div class="status-panel">
+                <div class="status-row">
+                    <span class="status-label">Model</span>
+                    <span id="model-status" class="status-value">No file loaded</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Crystals</span>
+                    <span id="crystal-status" class="status-value">0 found</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">HDRI</span>
+                    <span id="hdri-status" class="status-value">Disabled</span>
+                </div>
+            </div>
+
+            <!-- Material Properties -->
+            <div class="gui-section">
+                <div class="dropdown-container">
+                    <div class="dropdown-header active" onclick="toggleDropdown(this)">
+                        <span class="dropdown-title">Material Properties</span>
+                        <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                    <div class="dropdown-content">
+                        <div class="property-grid">
+                            <div class="property-row">
+                                <span class="property-label">Base Color</span>
+                                <input type="color" id="material-color" class="gui-color" value="#ffffff" onchange="updateMaterial()" style="width: 100%; height: 32px;">
+                                <span id="color-value" class="property-value">#FFFFFF</span>
+                            </div>
+                            
+                            <div class="property-row">
+                                <span class="property-label">Opacity</span>
+                                <input type="range" id="material-opacity" class="property-slider" min="0.1" max="1" step="0.01" value="1.0" oninput="updateMaterial()">
+                                <span id="opacity-value" class="property-value">1.00</span>
+                            </div>
+                            
+                            <div class="property-row">
+                                <span class="property-label">Transmission</span>
+                                <input type="range" id="material-transmission" class="property-slider" min="0" max="1" step="0.01" value="0.95" oninput="updateMaterial()">
+                                <span id="transmission-value" class="property-value">0.95</span>
+                            </div>
+                            
+                            <div class="property-row">
+                                <span class="property-label">Thickness</span>
+                                <input type="range" id="material-thickness" class="property-slider" min="0" max="5" step="0.1" value="1.0" oninput="updateMaterial()">
+                                <span id="thickness-value" class="property-value">1.0</span>
+                            </div>
+                            
+                            <div class="property-row">
+                                <span class="property-label">Refraction (IOR)</span>
+                                <input type="range" id="material-ior" class="property-slider" min="1" max="2.5" step="0.01" value="2.0" oninput="updateMaterial()">
+                                <span id="ior-value" class="property-value">2.00</span>
+                            </div>
+                            
+                            <div class="property-row">
+                                <span class="property-label">Roughness</span>
+                                <input type="range" id="material-roughness" class="property-slider" min="0" max="1" step="0.01" value="0.02" oninput="updateMaterial()">
+                                <span id="roughness-value" class="property-value">0.02</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scene Lighting -->
+            <div class="gui-section">
+                <div class="dropdown-container">
+                    <div class="dropdown-header" onclick="toggleDropdown(this)">
+                        <span class="dropdown-title">Scene Lighting</span>
+                        <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                    <div class="dropdown-content">
+                        <div class="gui-toggle">
+                            <span class="gui-toggle-label">Rotate Lights</span>
+                            <label class="gui-toggle-switch">
+                                <input type="checkbox" id="rotate-lights" checked onchange="toggleLightsRotation()">
+                                <span class="gui-toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="property-grid">
+                            <div class="property-row">
+                                <span class="property-label">Main Light</span>
+                                <input type="range" id="main-light" class="property-slider" min="0" max="5" step="0.1" value="2.5" oninput="updateLighting()">
+                                <span id="main-light-value" class="property-value">2.5</span>
+                            </div>
+                            
+                            <div class="property-row">
+                                <span class="property-label">Fill Light</span>
+                                <input type="range" id="fill-light" class="property-slider" min="0" max="5" step="0.1" value="1.2" oninput="updateLighting()">
+                                <span id="fill-light-value" class="property-value">1.2</span>
+                            </div>
+                            
+                            <div class="property-row">
+                                <span class="property-label">Ambient</span>
+                                <input type="range" id="ambient-light" class="property-slider" min="0" max="2" step="0.1" value="0.4" oninput="updateLighting()">
+                                <span id="ambient-value" class="property-value">0.4</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crystal Presets -->
+            <div class="gui-section">
+                <div class="dropdown-container">
+                    <div class="dropdown-header" onclick="toggleDropdown(this)">
+                        <span class="dropdown-title">Crystal Presets</span>
+                        <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                    <div class="dropdown-content">
+                        <div class="preset-grid">
+                            <button class="preset-button active" onclick="applyPreset('realistic')" data-preset="realistic">
+                                <svg class="preset-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span class="preset-name">Realistic</span>
+                            </button>
+                            <button class="preset-button" onclick="applyPreset('diamond')" data-preset="diamond">
+                                <svg class="preset-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                                </svg>
+                                <span class="preset-name">Diamond</span>
+                            </button>
+                            <button class="preset-button" onclick="applyPreset('sapphire')" data-preset="sapphire">
+                                <svg class="preset-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                                </svg>
+                                <span class="preset-name">Sapphire</span>
+                            </button>
+                            <button class="preset-button" onclick="applyPreset('emerald')" data-preset="emerald">
+                                <svg class="preset-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0 2l3 9m-3-9l-3 9"/>
+                                </svg>
+                                <span class="preset-name">Emerald</span>
+                            </button>
+                            <button class="preset-button" onclick="applyPreset('glass')" data-preset="glass">
+                                <svg class="preset-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                </svg>
+                                <span class="preset-name">Glass</span>
+                            </button>
+                            <button class="preset-button" onclick="applyPreset('quartz')" data-preset="quartz">
+                                <svg class="preset-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                </svg>
+                                <span class="preset-name">Quartz</span>
+                            </button>
+                            <button class="preset-button" onclick="applyPreset('ruby')" data-preset="ruby">
+                                <svg class="preset-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                </svg>
+                                <span class="preset-name">Ruby</span>
+                            </button>
+                            <button class="preset-button" onclick="applyPreset('ice')" data-preset="ice">
+                                <svg class="preset-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4 4 0 003 15z"/>
+                                </svg>
+                                <span class="preset-name">Ice</span>
+                            </button>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="action-button" onclick="resetMaterial()">
+                                <svg class="icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                Reset
+                            </button>
+                            <button class="action-button primary" onclick="copySettings()">
+                                <svg class="icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 01-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                                </svg>
+                                Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div id="footer">
+            <div class="footer-instructions">
+                <div class="instruction-item">
+                    <svg class="instruction-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                    </svg>
+                    <span>Drag to rotate</span>
+                </div>
+                <div class="instruction-item">
+                    <svg class="instruction-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/>
+                    </svg>
+                    <span>Scroll to zoom</span>
+                </div>
+                <div class="instruction-item">
+                    <svg class="instruction-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    <span>Right-click to pan</span>
+                </div>
+            </div>
+            <div>v1.0.0 | Crystal Viewer</div>
+        </div>
+    </div>
+
+    <!-- Three.js Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
+
+    <script>
+        // Core variables
+        let scene, camera, renderer, controls;
+        let pointLight1, pointLight2, pointLight3;
+        let keyLight, fillLight, ambientLight;
+        let animationId;
+        let hdriEnabled = false;
+        let hdriTexture = null;
+        let pmremGenerator;
+        let nightMode = true;
+        let currentModel = null;
+        let crystalMaterial = null;
+        let rotateLights = true;
+        let guiVisible = false;
+        let crystalMeshes = [];
+        let isHDRIChanging = false;
+        let modelPointLights = [];
+
+        // Initialize the application
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+            scene.fog = new THREE.Fog(0x0a0a0a, 10, 50);
+
+            // Create camera
+            camera = new THREE.PerspectiveCamera(
+                45,
+                container.clientWidth / container.clientHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(0, 2, 5);
+
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                alpha: true,
+                powerPreference: 'high-performance'
+            });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // PMREM Generator for HDRI
+            pmremGenerator = new THREE.PMREMGenerator(renderer);
+            pmremGenerator.compileEquirectangularShader();
+
+            // Create default crystal material
+            createCrystalMaterial();
+
+            // Setup lighting
+            setupLighting();
+
+            // Create ground plane
+            const groundGeometry = new THREE.PlaneGeometry(50, 50);
+            const groundMaterial = new THREE.MeshStandardMaterial({
+                color: 0x111111,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -1;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Setup orbit controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 2;
+            controls.maxDistance = 20;
+            controls.maxPolarAngle = Math.PI / 2 - 0.1;
+
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+
+            // Start animation loop
+            animate();
+
+            // Show GUI by default
+            toggleGUI();
+        }
+
+        function createCrystalMaterial() {
+            crystalMaterial = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff,
+                metalness: 0.0,
+                roughness: 0.02,
+                ior: 2.0,
+                transmission: 0.95,
+                thickness: 1.0,
+                specularIntensity: 0.5,
+                specularColor: 0xffffff,
+                envMapIntensity: 1.0,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.03,
+                transparent: true,
+                opacity: 1.0,
+                side: THREE.DoubleSide
+            });
+        }
+
+        function setupLighting() {
+            // Ambient light
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+
+            // Key light (main directional)
+            keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+            keyLight.position.set(5, 10, 5);
+            keyLight.castShadow = true;
+            keyLight.shadow.mapSize.width = 2048;
+            keyLight.shadow.mapSize.height = 2048;
+            keyLight.shadow.camera.near = 0.1;
+            keyLight.shadow.camera.far = 50;
+            scene.add(keyLight);
+
+            // Fill light
+            fillLight = new THREE.DirectionalLight(0xaaccff, 1.2);
+            fillLight.position.set(-8, 5, 3);
+            scene.add(fillLight);
+
+            // Point lights
+            pointLight1 = new THREE.PointLight(0x88ccff, 1.5, 20);
+            pointLight1.position.set(6, 4, 6);
+            pointLight1.decay = 2;
+            scene.add(pointLight1);
+
+            pointLight2 = new THREE.PointLight(0xff88cc, 1.5, 20);
+            pointLight2.position.set(-6, 4, -6);
+            pointLight2.decay = 2;
+            scene.add(pointLight2);
+
+            pointLight3 = new THREE.PointLight(0x88ff88, 1.0, 15);
+            pointLight3.position.set(0, 3, 8);
+            pointLight3.decay = 2;
+            scene.add(pointLight3);
+        }
+
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            
+            // Rotate point lights if enabled
+            if (rotateLights) {
+                const time = Date.now() * 0.001;
+                pointLight1.position.x = Math.cos(time) * 3;
+                pointLight1.position.z = Math.sin(time) * 3;
+                pointLight2.position.x = Math.cos(time + Math.PI) * 3;
+                pointLight2.position.z = Math.sin(time + Math.PI) * 3;
+                pointLight3.position.y = 3 + Math.sin(time * 1.5) * 0.5;
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // File Upload Handling
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const uploadBtn = document.getElementById('upload-btn');
+            const loadingEl = document.getElementById('loading');
+            const errorMsg = document.getElementById('error-msg');
+
+            // Show loading state
+            loadingEl.style.display = 'block';
+            uploadBtn.disabled = true;
+            errorMsg.style.display = 'none';
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const arrayBuffer = e.target.result;
+                const loader = new THREE.GLTFLoader();
+
+                try {
+                    const dracoLoader = new THREE.DRACOLoader();
+                    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+                    dracoLoader.setDecoderConfig({ type: 'js' });
+                    loader.setDRACOLoader(dracoLoader);
+                } catch (err) {
+                    console.warn('Draco loader setup failed, continuing without it');
+                }
+
+                loader.parse(
+                    arrayBuffer,
+                    '',
+                    function(gltf) {
+                        // Remove previous model
+                        if (currentModel) {
+                            scene.remove(currentModel);
+                            crystalMeshes = [];
+                            modelPointLights = [];
+                        }
+
+                        const model = gltf.scene;
+                        model.name = 'uploadedModel';
+                        currentModel = model;
+
+                        let crystalCount = 0;
+                        
+                        // Apply crystal material to meshes named "Crystal"
+                        model.traverse(function(child) {
+                            if (child.isMesh) {
+                                const meshName = child.name.toLowerCase();
+                                if (meshName.includes('crystal')) {
+                                    crystalCount++;
+                                    
+                                    if (Array.isArray(child.material)) {
+                                        // Multiple materials
+                                        if (child.material.length > 1) {
+                                            child.material[1] = crystalMaterial.clone();
+                                            crystalMeshes.push({
+                                                mesh: child,
+                                                primitiveIndex: 1
+                                            });
+                                        } else {
+                                            child.material[0] = crystalMaterial.clone();
+                                            crystalMeshes.push({
+                                                mesh: child,
+                                                primitiveIndex: 0
+                                            });
+                                        }
+                                    } else {
+                                        // Single material
+                                        child.material = crystalMaterial.clone();
+                                        crystalMeshes.push({
+                                            mesh: child,
+                                            primitiveIndex: -1
+                                        });
+                                    }
+                                    
+                                    child.castShadow = true;
+                                    child.receiveShadow = true;
+                                }
+                            }
+                        });
+
+                        // Center and scale model
+                        const box = new THREE.Box3().setFromObject(model);
+                        const center = box.getCenter(new THREE.Vector3());
+                        const size = box.getSize(new THREE.Vector3());
+                        const maxDim = Math.max(size.x, size.y, size.z);
+                        const scale = 2 / maxDim;
+
+                        model.scale.setScalar(scale);
+                        model.position.sub(center.multiplyScalar(scale));
+
+                        scene.add(model);
+
+                        // Update HDRI if enabled
+                        if (hdriEnabled && hdriTexture) {
+                            setTimeout(() => {
+                                enableHDRI();
+                            }, 100);
+                        }
+
+                        // Update status
+                        document.getElementById('model-status').textContent = file.name;
+                        document.getElementById('crystal-status').textContent = `${crystalCount} found`;
+                        
+                        // Hide loading
+                        loadingEl.style.display = 'none';
+                        uploadBtn.disabled = false;
+                        
+                        // Show success message
+                        showMessage(`Model loaded successfully! Found ${crystalCount} crystal mesh(es).`, 'success');
+                    },
+                    undefined,
+                    function(error) {
+                        console.error('Error loading model:', error);
+                        loadingEl.style.display = 'none';
+                        uploadBtn.disabled = false;
+                        showMessage('Failed to load model: ' + error.message, 'error');
+                    }
+                );
+            };
+
+            reader.onerror = function() {
+                loadingEl.style.display = 'none';
+                uploadBtn.disabled = false;
+                showMessage('Failed to read file', 'error');
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        // GUI Functions
+        function toggleDropdown(header) {
+            const isActive = header.classList.contains('active');
+            
+            // Close all other dropdowns
+            document.querySelectorAll('.dropdown-header').forEach(dropdown => {
+                if (dropdown !== header) {
+                    dropdown.classList.remove('active');
+                }
+            });
+            
+            // Toggle current dropdown
+            header.classList.toggle('active');
+        }
+
+        function toggleGUI() {
+            const gui = document.getElementById('gui-container');
+            const btn = document.getElementById('toggle-gui-btn');
+            
+            guiVisible = !guiVisible;
+            
+            if (guiVisible) {
+                gui.style.display = 'block';
+                btn.innerHTML = '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span>Hide</span>';
+            } else {
+                gui.style.display = 'none';
+                btn.innerHTML = '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg><span>Controls</span>';
+            }
+        }
+
+        function toggleMode() {
+            nightMode = !nightMode;
+            const body = document.body;
+            const btn = document.getElementById('toggle-mode-btn');
+            
+            if (nightMode) {
+                body.classList.remove('day-mode');
+                body.classList.add('night-mode');
+                btn.innerHTML = '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg><span>Dark</span>';
+                
+                scene.background = new THREE.Color(0x0a0a0a);
+                scene.fog = new THREE.Fog(0x0a0a0a, 10, 50);
+                
+                // Adjust lighting for night mode
+                ambientLight.intensity = 0.1;
+                keyLight.intensity = 1.2;
+                keyLight.color.setHex(0x6688ff);
+                fillLight.intensity = 0.8;
+                fillLight.color.setHex(0x4455aa);
+            } else {
+                body.classList.remove('night-mode');
+                body.classList.add('day-mode');
+                btn.innerHTML = '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg><span>Light</span>';
+                
+                scene.background = new THREE.Color(0xf5f5f5);
+                scene.fog = new THREE.Fog(0xf5f5f5, 10, 50);
+                
+                // Adjust lighting for day mode
+                ambientLight.intensity = 0.4;
+                keyLight.intensity = 2.5;
+                keyLight.color.setHex(0xffffff);
+                fillLight.intensity = 1.2;
+                fillLight.color.setHex(0xaaccff);
+            }
+            
+            // Update GUI slider values
+            updateLightingGUI();
+        }
+
+        function toggleHDRI() {
+            if (isHDRIChanging) return;
+            
+            if (!hdriEnabled) {
+                document.getElementById('hdri-input').click();
+            } else {
+                disableHDRI();
+            }
+        }
+
+        function handleHDRIUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            isHDRIChanging = true;
+            showMessage('Loading HDRI...', 'info');
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const rgbeLoader = new THREE.RGBELoader();
+
+                rgbeLoader.load(
+                    URL.createObjectURL(file),
+                    function(texture) {
+                        hdriTexture = pmremGenerator.fromEquirectangular(texture).texture;
+                        texture.dispose();
+                        enableHDRI();
+                        showMessage('HDRI loaded successfully!', 'success');
+                        isHDRIChanging = false;
+                    },
+                    undefined,
+                    function(error) {
+                        console.error('Error loading HDRI:', error);
+                        showMessage('Failed to load HDRI file', 'error');
+                        isHDRIChanging = false;
+                    }
+                );
+            };
+
+            reader.onerror = function() {
+                showMessage('Failed to read HDRI file', 'error');
+                isHDRIChanging = false;
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function enableHDRI() {
+            if (!hdriTexture) return;
+
+            hdriEnabled = true;
+            scene.environment = hdriTexture;
+            
+            document.getElementById('hdri-status').textContent = 'Enabled';
+            document.getElementById('toggle-hdri-btn').innerHTML = '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg><span>HDRI</span>';
+        }
+
+        function disableHDRI() {
+            hdriEnabled = false;
+            scene.environment = null;
+            
+            document.getElementById('hdri-status').textContent = 'Disabled';
+            document.getElementById('toggle-hdri-btn').innerHTML = '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg><span>HDRI</span>';
+        }
+
+        function toggleLightsRotation() {
+            rotateLights = document.getElementById('rotate-lights').checked;
+        }
+
+        function updateMaterial() {
+            if (crystalMeshes.length === 0) return;
+            
+            // Get values from GUI
+            const color = document.getElementById('material-color').value;
+            const opacity = parseFloat(document.getElementById('material-opacity').value);
+            const ior = parseFloat(document.getElementById('material-ior').value);
+            const roughness = parseFloat(document.getElementById('material-roughness').value);
+            const transmission = parseFloat(document.getElementById('material-transmission').value);
+            const thickness = parseFloat(document.getElementById('material-thickness').value);
+            
+            // Update display values
+            document.getElementById('color-value').textContent = color.toUpperCase();
+            document.getElementById('opacity-value').textContent = opacity.toFixed(2);
+            document.getElementById('ior-value').textContent = ior.toFixed(2);
+            document.getElementById('roughness-value').textContent = roughness.toFixed(2);
+            document.getElementById('transmission-value').textContent = transmission.toFixed(2);
+            document.getElementById('thickness-value').textContent = thickness.toFixed(1);
+            
+            // Apply to all crystal meshes
+            crystalMeshes.forEach(crystalData => {
+                const mesh = crystalData.mesh;
+                const primitiveIndex = crystalData.primitiveIndex;
+                
+                if (primitiveIndex === -1) {
+                    // Single material mesh
+                    mesh.material.color.setStyle(color);
+                    mesh.material.opacity = opacity;
+                    mesh.material.ior = ior;
+                    mesh.material.roughness = roughness;
+                    mesh.material.transmission = transmission;
+                    mesh.material.thickness = thickness;
+                    mesh.material.needsUpdate = true;
+                } else if (Array.isArray(mesh.material)) {
+                    // Multiple materials
+                    if (mesh.material.length > primitiveIndex) {
+                        const material = mesh.material[primitiveIndex];
+                        material.color.setStyle(color);
+                        material.opacity = opacity;
+                        material.ior = ior;
+                        material.roughness = roughness;
+                        material.transmission = transmission;
+                        material.thickness = thickness;
+                        material.needsUpdate = true;
+                    }
+                }
+            });
+        }
+
+        function updateLighting() {
+            const mainIntensity = parseFloat(document.getElementById('main-light').value);
+            const fillIntensity = parseFloat(document.getElementById('fill-light').value);
+            const ambientIntensity = parseFloat(document.getElementById('ambient-light').value);
+            
+            // Update display values
+            document.getElementById('main-light-value').textContent = mainIntensity.toFixed(1);
+            document.getElementById('fill-light-value').textContent = fillIntensity.toFixed(1);
+            document.getElementById('ambient-value').textContent = ambientIntensity.toFixed(1);
+            
+            // Apply to lights
+            keyLight.intensity = mainIntensity;
+            fillLight.intensity = fillIntensity;
+            ambientLight.intensity = ambientIntensity;
+        }
+
+        function updateLightingGUI() {
+            if (nightMode) {
+                document.getElementById('main-light').value = 1.2;
+                document.getElementById('fill-light').value = 0.8;
+                document.getElementById('ambient-light').value = 0.1;
+            } else {
+                document.getElementById('main-light').value = 2.5;
+                document.getElementById('fill-light').value = 1.2;
+                document.getElementById('ambient-light').value = 0.4;
+            }
+            updateLighting();
+        }
+
+        // Preset System
+        const presets = {
+            realistic: {
+                color: '#ffffff',
+                opacity: 1.0,
+                ior: 2.0,
+                roughness: 0.02,
+                transmission: 0.95,
+                thickness: 1.0
+            },
+            diamond: {
+                color: '#ffffff',
+                opacity: 1.0,
+                ior: 2.42,
+                roughness: 0.01,
+                transmission: 0.98,
+                thickness: 1.0
+            },
+            sapphire: {
+                color: '#2962ff',
+                opacity: 1.0,
+                ior: 1.77,
+                roughness: 0.01,
+                transmission: 0.85,
+                thickness: 1.2
+            },
+            emerald: {
+                color: '#50c878',
+                opacity: 1.0,
+                ior: 1.58,
+                roughness: 0.03,
+                transmission: 0.88,
+                thickness: 1.0
+            },
+            glass: {
+                color: '#ffffff',
+                opacity: 1.0,
+                ior: 1.5,
+                roughness: 0.0,
+                transmission: 0.95,
+                thickness: 0.5
+            },
+            quartz: {
+                color: '#ffffff',
+                opacity: 1.0,
+                ior: 1.54,
+                roughness: 0.05,
+                transmission: 0.92,
+                thickness: 0.8
+            },
+            ruby: {
+                color: '#e0115f',
+                opacity: 1.0,
+                ior: 1.76,
+                roughness: 0.01,
+                transmission: 0.82,
+                thickness: 1.5
+            },
+            ice: {
+                color: '#f0faff',
+                opacity: 0.95,
+                ior: 1.31,
+                roughness: 0.25,
+                transmission: 0.75,
+                thickness: 0.6
+            }
+        };
+
+        function applyPreset(presetName) {
+            const preset = presets[presetName];
+            if (!preset) return;
+            
+            // Update GUI inputs
+            document.getElementById('material-color').value = preset.color;
+            document.getElementById('material-opacity').value = preset.opacity;
+            document.getElementById('material-ior').value = preset.ior;
+            document.getElementById('material-roughness').value = preset.roughness;
+            document.getElementById('material-transmission').value = preset.transmission;
+            document.getElementById('material-thickness').value = preset.thickness;
+            
+            // Update material
+            updateMaterial();
+            
+            // Update active button
+            document.querySelectorAll('.preset-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-preset="${presetName}"]`).classList.add('active');
+        }
+
+        function resetMaterial() {
+            applyPreset('realistic');
+        }
+
+        function copySettings() {
+            const settings = {
+                color: document.getElementById('material-color').value,
+                opacity: document.getElementById('material-opacity').value,
+                ior: document.getElementById('material-ior').value,
+                roughness: document.getElementById('material-roughness').value,
+                transmission: document.getElementById('material-transmission').value,
+                thickness: document.getElementById('material-thickness').value
+            };
+            
+            navigator.clipboard.writeText(JSON.stringify(settings, null, 2))
+                .then(() => showMessage('Settings copied to clipboard!', 'success'))
+                .catch(() => showMessage('Failed to copy settings', 'error'));
+        }
+
+        // Utility Functions
+        function showMessage(text, type = 'info') {
+            const errorMsg = document.getElementById('error-msg');
+            errorMsg.textContent = text;
+            errorMsg.style.display = 'block';
+            
+            // Set background color based on type
+            if (type === 'error') {
+                errorMsg.style.background = 'rgba(239, 68, 68, 0.9)';
+            } else if (type === 'success') {
+                errorMsg.style.background = 'rgba(16, 185, 129, 0.9)';
+            } else {
+                errorMsg.style.background = 'rgba(59, 130, 246, 0.9)';
+            }
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                errorMsg.style.display = 'none';
+            }, 3000);
+        }
+
+        // Initialize on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
