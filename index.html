@@ -125,7 +125,7 @@
                 </div>
             </div>
 
-            <!-- Material Properties -->
+            <!-- Material Properties section in index.html -->
             <div class="gui-section">
                 <div class="dropdown-container">
                     <div class="dropdown-header active" onclick="toggleDropdown(this)">
@@ -137,6 +137,7 @@
                     </div>
                     <div class="dropdown-content">
                         <div class="property-grid">
+                            <!-- Basic Properties -->
                             <div class="property-row">
                                 <span class="property-label">Base Color</span>
                                 <input type="color" id="material-color" class="gui-color" value="#ffffff"
@@ -178,12 +179,117 @@
                                     step="0.01" value="0.02" oninput="updateMaterial()">
                                 <span id="roughness-value" class="property-value">0.02</span>
                             </div>
+
+                            <!-- Clearcoat Properties -->
+                            <div class="property-row" style="margin-top: 15px;">
+                                <span class="property-label">Clearcoat</span>
+                                <input type="range" id="material-clearcoat" class="property-slider" min="0" max="1"
+                                    step="0.01" value="1.0" oninput="updateMaterial()">
+                                <span id="clearcoat-value" class="property-value">1.00</span>
+                            </div>
+
+                            <div class="property-row">
+                                <span class="property-label">Clearcoat Roughness</span>
+                                <input type="range" id="material-clearcoat-roughness" class="property-slider" min="0"
+                                    max="1" step="0.01" value="0.01" oninput="updateMaterial()">
+                                <span id="clearcoat-roughness-value" class="property-value">0.01</span>
+                            </div>
+
+                            <!-- Sheen Properties -->
+                            <div class="property-row" style="margin-top: 15px;">
+                                <span class="property-label">Sheen</span>
+                                <input type="range" id="material-sheen" class="property-slider" min="0" max="1"
+                                    step="0.01" value="0.0" oninput="updateMaterial()">
+                                <span id="sheen-value" class="property-value">0.00</span>
+                            </div>
+
+                            <div class="property-row">
+                                <span class="property-label">Sheen Roughness</span>
+                                <input type="range" id="material-sheen-roughness" class="property-slider" min="0"
+                                    max="1" step="0.01" value="0.1" oninput="updateMaterial()">
+                                <span id="sheen-roughness-value" class="property-value">0.10</span>
+                            </div>
+
+                            <div class="property-row">
+                                <span class="property-label">Sheen Color</span>
+                                <input type="color" id="material-sheen-color" class="gui-color" value="#ffffff"
+                                    onchange="updateMaterial()" style="width: 100%; height: 32px;">
+                                <span id="sheen-color-value" class="property-value">#FFFFFF</span>
+                            </div>
+
+                            <!-- Specular Properties -->
+                            <div class="property-row" style="margin-top: 15px;">
+                                <span class="property-label">Specular Intensity</span>
+                                <input type="range" id="material-specular-intensity" class="property-slider" min="0"
+                                    max="2" step="0.01" value="0.8" oninput="updateMaterial()">
+                                <span id="specular-intensity-value" class="property-value">0.80</span>
+                            </div>
+
+                            <div class="property-row">
+                                <span class="property-label">Specular Color</span>
+                                <input type="color" id="material-specular-color" class="gui-color" value="#ffffff"
+                                    onchange="updateMaterial()" style="width: 100%; height: 32px;">
+                                <span id="specular-color-value" class="property-value">#FFFFFF</span>
+                            </div>
+
+                            <!-- Attenuation Properties -->
+                            <div class="property-row" style="margin-top: 15px;">
+                                <span class="property-label">Attenuation Color</span>
+                                <input type="color" id="material-attenuation-color" class="gui-color" value="#ffffff"
+                                    onchange="updateMaterial()" style="width: 100%; height: 32px;">
+                                <span id="attenuation-color-value" class="property-value">#FFFFFF</span>
+                            </div>
+
+                            <div class="property-row">
+                                <span class="property-label">Attenuation Distance</span>
+                                <input type="range" id="material-attenuation-distance" class="property-slider" min="0"
+                                    max="5" step="0.1" value="0.0" oninput="updateMaterial()">
+                                <span id="attenuation-distance-value" class="property-value">0.0</span>
+                            </div>
+
+                            <!-- Anisotropy Properties -->
+                            <div class="property-row" style="margin-top: 15px;">
+                                <span class="property-label">Anisotropy</span>
+                                <input type="range" id="material-anisotropy" class="property-slider" min="0" max="1"
+                                    step="0.01" value="0.0" oninput="updateMaterial()">
+                                <span id="anisotropy-value" class="property-value">0.00</span>
+                            </div>
+
+                            <div class="property-row">
+                                <span class="property-label">Anisotropy Rotation</span>
+                                <input type="range" id="material-anisotropy-rotation" class="property-slider" min="0"
+                                    max="1" step="0.01" value="0.0" oninput="updateMaterial()">
+                                <span id="anisotropy-rotation-value" class="property-value">0.00</span>
+                            </div>
+
+                            <!-- Environment Properties -->
+                            <div class="property-row" style="margin-top: 15px;">
+                                <span class="property-label">Environment Intensity</span>
+                                <input type="range" id="material-env-intensity" class="property-slider" min="0" max="3"
+                                    step="0.1" value="1.2" oninput="updateMaterial()">
+                                <span id="env-intensity-value" class="property-value">1.2</span>
+                            </div>
+
+                            <!-- Emissive Properties -->
+                            <div class="property-row" style="margin-top: 15px;">
+                                <span class="property-label">Emissive Intensity</span>
+                                <input type="range" id="material-emissive-intensity" class="property-slider" min="0"
+                                    max="2" step="0.1" value="0.0" oninput="updateMaterial()">
+                                <span id="emissive-intensity-value" class="property-value">0.0</span>
+                            </div>
+
+                            <div class="property-row">
+                                <span class="property-label">Emissive Color</span>
+                                <input type="color" id="material-emissive-color" class="gui-color" value="#000000"
+                                    onchange="updateMaterial()" style="width: 100%; height: 32px;">
+                                <span id="emissive-color-value" class="property-value">#000000</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Scene Lighting -->
+            <!-- Scene Lighting section only (remove HDRI rotation) -->
             <div class="gui-section">
                 <div class="dropdown-container">
                     <div class="dropdown-header" onclick="toggleDropdown(this)">
@@ -224,11 +330,35 @@
                                 <span id="ambient-value" class="property-value">0.4</span>
                             </div>
                         </div>
+
+                        <!-- HDRI Controls (without rotation) -->
+                        <div class="property-grid"
+                            style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div class="property-row">
+                                <span class="property-label">HDRI Exposure</span>
+                                <input type="range" id="hdri-exposure" class="property-slider" min="0" max="5"
+                                    step="0.1" value="1.0" oninput="updateHDRIExposure()">
+                                <span id="hdri-exposure-value" class="property-value">1.0</span>
+                            </div>
+
+                            <div class="property-row">
+                                <span class="property-label">Tone Mapping</span>
+                                <select id="tone-mapping" class="property-select" onchange="updateToneMapping()"
+                                    style="width: 100%; padding: 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2);">
+                                    <option value="ACESFilmic">ACES Filmic</option>
+                                    <option value="Reinhard">Reinhard</option>
+                                    <option value="Cineon">Cineon</option>
+                                    <option value="Linear">Linear</option>
+                                    <option value="None">None</option>
+                                </select>
+                                <span id="tone-mapping-value" class="property-value">ACESFilmic</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Crystal Presets -->
+            <!-- Crystal Presets section in index.html -->
             <div class="gui-section">
                 <div class="dropdown-container">
                     <div class="dropdown-header" onclick="toggleDropdown(this)">
@@ -302,6 +432,28 @@
                                         d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4 4 0 003 15z" />
                                 </svg>
                                 <span class="preset-name">Ice</span>
+                            </button>
+                            <button class="preset-button" onclick="applyPreset('holographic')"
+                                data-preset="holographic">
+                                <svg class="preset-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                <span class="preset-name">Holographic</span>
+                            </button>
+                            <button class="preset-button" onclick="applyPreset('iridescent')" data-preset="iridescent">
+                                <svg class="preset-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                                <span class="preset-name">Iridescent</span>
+                            </button>
+                            <button class="preset-button" onclick="applyPreset('glow')" data-preset="glow">
+                                <svg class="preset-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                                <span class="preset-name">Glow</span>
                             </button>
                         </div>
 

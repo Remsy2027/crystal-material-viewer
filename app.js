@@ -15,6 +15,10 @@ let crystalMeshes = [];
 let isHDRIChanging = false;
 let modelPointLights = [];
 
+// HDRI variables (removed rotation)
+let currentHDRIExposure = 1.0;
+let currentToneMapping = THREE.ACESFilmicToneMapping;
+
 // Model lighting controls
 let modelLightsEnabled = false;
 let modelLightsIntensity = 1.0;
@@ -24,7 +28,16 @@ let modelLightsColor = '#ffffff';
 const DEFAULT_MODEL_PATH = 'models/crystal-chandelier-lamp.glb';
 const DEFAULT_HDRI_PATH = 'hdri/neutral.hdr';
 
-// Preset definitions
+// Tone mapping presets
+const toneMappingPresets = {
+    'ACESFilmic': THREE.ACESFilmicToneMapping,
+    'Reinhard': THREE.ReinhardToneMapping,
+    'Cineon': THREE.CineonToneMapping,
+    'Linear': THREE.LinearToneMapping,
+    'None': THREE.NoToneMapping
+};
+
+// Extended preset definitions with new parameters
 const presets = {
     realistic: {
         color: '#ffffff',
@@ -32,7 +45,22 @@ const presets = {
         ior: 2.0,
         roughness: 0.02,
         transmission: 0.95,
-        thickness: 1.0
+        thickness: 1.0,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.01,
+        sheen: 0.0,
+        sheenRoughness: 0.1,
+        sheenColor: '#ffffff',
+        specularIntensity: 0.8,
+        specularColor: '#ffffff',
+        attenuationColor: '#ffffff',
+        attenuationDistance: 0.0,
+        anisotropy: 0.0,
+        anisotropyRotation: 0.0,
+        dispersion: 0.0,
+        envMapIntensity: 1.2,
+        emissiveIntensity: 0.0,
+        emissiveColor: '#000000'
     },
     diamond: {
         color: '#ffffff',
@@ -40,7 +68,22 @@ const presets = {
         ior: 2.42,
         roughness: 0.01,
         transmission: 0.98,
-        thickness: 1.0
+        thickness: 1.0,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.0,
+        sheen: 0.0,
+        sheenRoughness: 0.0,
+        sheenColor: '#ffffff',
+        specularIntensity: 1.0,
+        specularColor: '#ffffff',
+        attenuationColor: '#ffffff',
+        attenuationDistance: 0.0,
+        anisotropy: 0.2,
+        anisotropyRotation: 0.0,
+        dispersion: 0.05,
+        envMapIntensity: 1.5,
+        emissiveIntensity: 0.0,
+        emissiveColor: '#000000'
     },
     sapphire: {
         color: '#0066cc',
@@ -48,7 +91,22 @@ const presets = {
         ior: 1.77,
         roughness: 0.01,
         transmission: 0.92,
-        thickness: 0.8
+        thickness: 0.8,
+        clearcoat: 0.8,
+        clearcoatRoughness: 0.02,
+        sheen: 0.1,
+        sheenRoughness: 0.15,
+        sheenColor: '#0088ff',
+        specularIntensity: 0.9,
+        specularColor: '#0088ff',
+        attenuationColor: '#004488',
+        attenuationDistance: 0.5,
+        anisotropy: 0.1,
+        anisotropyRotation: 0.3,
+        dispersion: 0.02,
+        envMapIntensity: 1.3,
+        emissiveIntensity: 0.0,
+        emissiveColor: '#000000'
     },
     emerald: {
         color: '#00cc88',
@@ -56,7 +114,22 @@ const presets = {
         ior: 1.58,
         roughness: 0.02,
         transmission: 0.90,
-        thickness: 0.8
+        thickness: 0.8,
+        clearcoat: 0.7,
+        clearcoatRoughness: 0.03,
+        sheen: 0.15,
+        sheenRoughness: 0.2,
+        sheenColor: '#00ffaa',
+        specularIntensity: 0.8,
+        specularColor: '#00ffaa',
+        attenuationColor: '#006644',
+        attenuationDistance: 0.6,
+        anisotropy: 0.0,
+        anisotropyRotation: 0.0,
+        dispersion: 0.01,
+        envMapIntensity: 1.2,
+        emissiveIntensity: 0.0,
+        emissiveColor: '#000000'
     },
     glass: {
         color: '#ffffff',
@@ -64,7 +137,22 @@ const presets = {
         ior: 1.5,
         roughness: 0.0,
         transmission: 0.97,
-        thickness: 0.5
+        thickness: 0.5,
+        clearcoat: 0.0,
+        clearcoatRoughness: 0.0,
+        sheen: 0.0,
+        sheenRoughness: 0.0,
+        sheenColor: '#ffffff',
+        specularIntensity: 0.5,
+        specularColor: '#ffffff',
+        attenuationColor: '#ffffff',
+        attenuationDistance: 0.0,
+        anisotropy: 0.0,
+        anisotropyRotation: 0.0,
+        dispersion: 0.0,
+        envMapIntensity: 1.0,
+        emissiveIntensity: 0.0,
+        emissiveColor: '#000000'
     },
     quartz: {
         color: '#ffffff',
@@ -72,7 +160,22 @@ const presets = {
         ior: 1.54,
         roughness: 0.01,
         transmission: 0.94,
-        thickness: 0.7
+        thickness: 0.7,
+        clearcoat: 0.5,
+        clearcoatRoughness: 0.05,
+        sheen: 0.05,
+        sheenRoughness: 0.25,
+        sheenColor: '#ffffff',
+        specularIntensity: 0.7,
+        specularColor: '#ffffff',
+        attenuationColor: '#ffffff',
+        attenuationDistance: 0.3,
+        anisotropy: 0.0,
+        anisotropyRotation: 0.0,
+        dispersion: 0.0,
+        envMapIntensity: 1.1,
+        emissiveIntensity: 0.0,
+        emissiveColor: '#000000'
     },
     ruby: {
         color: '#ff3366',
@@ -80,7 +183,22 @@ const presets = {
         ior: 1.76,
         roughness: 0.01,
         transmission: 0.88,
-        thickness: 0.9
+        thickness: 0.9,
+        clearcoat: 0.9,
+        clearcoatRoughness: 0.01,
+        sheen: 0.2,
+        sheenRoughness: 0.1,
+        sheenColor: '#ff6688',
+        specularIntensity: 1.0,
+        specularColor: '#ff6688',
+        attenuationColor: '#990033',
+        attenuationDistance: 0.7,
+        anisotropy: 0.15,
+        anisotropyRotation: 0.5,
+        dispersion: 0.03,
+        envMapIntensity: 1.4,
+        emissiveIntensity: 0.0,
+        emissiveColor: '#000000'
     },
     ice: {
         color: '#e6f7ff',
@@ -88,7 +206,22 @@ const presets = {
         ior: 1.31,
         roughness: 0.15,
         transmission: 0.85,
-        thickness: 0.4
+        thickness: 0.4,
+        clearcoat: 0.3,
+        clearcoatRoughness: 0.1,
+        sheen: 0.3,
+        sheenRoughness: 0.4,
+        sheenColor: '#b3e5ff',
+        specularIntensity: 0.6,
+        specularColor: '#b3e5ff',
+        attenuationColor: '#99d6ff',
+        attenuationDistance: 0.8,
+        anisotropy: 0.0,
+        anisotropyRotation: 0.0,
+        dispersion: 0.01,
+        envMapIntensity: 1.0,
+        emissiveIntensity: 0.1,
+        emissiveColor: '#b3e5ff'
     },
     chandelier: {
         color: '#ffffff',
@@ -96,7 +229,92 @@ const presets = {
         ior: 1.7,
         roughness: 0.01,
         transmission: 0.96,
-        thickness: 0.6
+        thickness: 0.6,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.01,
+        sheen: 0.1,
+        sheenRoughness: 0.15,
+        sheenColor: '#ffffff',
+        specularIntensity: 0.8,
+        specularColor: '#ffffff',
+        attenuationColor: '#ffffff',
+        attenuationDistance: 0.0,
+        anisotropy: 0.05,
+        anisotropyRotation: 0.0,
+        dispersion: 0.02,
+        envMapIntensity: 1.2,
+        emissiveIntensity: 0.0,
+        emissiveColor: '#000000'
+    },
+    // New experimental presets
+    holographic: {
+        color: '#ffffff',
+        opacity: 0.95,
+        ior: 2.1,
+        roughness: 0.05,
+        transmission: 0.8,
+        thickness: 0.3,
+        clearcoat: 0.8,
+        clearcoatRoughness: 0.02,
+        sheen: 0.5,
+        sheenRoughness: 0.1,
+        sheenColor: '#ff00ff',
+        specularIntensity: 1.0,
+        specularColor: '#ff00ff',
+        attenuationColor: '#ff00ff',
+        attenuationDistance: 1.0,
+        anisotropy: 0.3,
+        anisotropyRotation: 0.8,
+        dispersion: 0.1,
+        envMapIntensity: 2.0,
+        emissiveIntensity: 0.3,
+        emissiveColor: '#ff00ff'
+    },
+    iridescent: {
+        color: '#ffffff',
+        opacity: 0.9,
+        ior: 1.8,
+        roughness: 0.02,
+        transmission: 0.7,
+        thickness: 0.4,
+        clearcoat: 0.6,
+        clearcoatRoughness: 0.01,
+        sheen: 0.8,
+        sheenRoughness: 0.05,
+        sheenColor: '#00ffff',
+        specularIntensity: 0.9,
+        specularColor: '#00ffff',
+        attenuationColor: '#00ffff',
+        attenuationDistance: 0.5,
+        anisotropy: 0.4,
+        anisotropyRotation: 0.6,
+        dispersion: 0.08,
+        envMapIntensity: 1.8,
+        emissiveIntensity: 0.2,
+        emissiveColor: '#00ffff'
+    },
+    glow: {
+        color: '#ffffff',
+        opacity: 0.8,
+        ior: 1.6,
+        roughness: 0.1,
+        transmission: 0.6,
+        thickness: 0.5,
+        clearcoat: 0.4,
+        clearcoatRoughness: 0.15,
+        sheen: 0.2,
+        sheenRoughness: 0.3,
+        sheenColor: '#ffff00',
+        specularIntensity: 0.7,
+        specularColor: '#ffff00',
+        attenuationColor: '#ffff00',
+        attenuationDistance: 0.9,
+        anisotropy: 0.1,
+        anisotropyRotation: 0.2,
+        dispersion: 0.04,
+        envMapIntensity: 1.5,
+        emissiveIntensity: 0.8,
+        emissiveColor: '#ffff00'
     }
 };
 
@@ -127,7 +345,7 @@ function init() {
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.0;
+    renderer.toneMappingExposure = currentHDRIExposure;
     renderer.outputEncoding = THREE.sRGBEncoding;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -137,7 +355,7 @@ function init() {
     pmremGenerator = new THREE.PMREMGenerator(renderer);
     pmremGenerator.compileEquirectangularShader();
 
-    // Create default crystal material
+    // Create default crystal material with extended parameters
     createCrystalMaterial();
 
     // Setup lighting
@@ -181,20 +399,44 @@ function init() {
 
 function createCrystalMaterial() {
     crystalMaterial = new THREE.MeshPhysicalMaterial({
+        // Basic properties
         color: 0xffffff,
         metalness: 0.0,
         roughness: 0.01,
         ior: 1.7,
         transmission: 0.96,
         thickness: 0.6,
-        specularIntensity: 0.8,
-        specularColor: 0xffffff,
-        envMapIntensity: 1.2,
-        clearcoat: 1.0,
-        clearcoatRoughness: 0.01,
         transparent: true,
         opacity: 1.0,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
+        
+        // Clearcoat properties
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.01,
+        
+        // Sheen properties
+        sheen: 0.0,
+        sheenRoughness: 0.1,
+        sheenColor: 0xffffff,
+        
+        // Specular properties
+        specularIntensity: 0.8,
+        specularColor: 0xffffff,
+        
+        // Transmission/attenuation properties
+        attenuationColor: 0xffffff,
+        attenuationDistance: 0.0,
+        
+        // Anisotropy properties
+        anisotropy: 0.0,
+        anisotropyRotation: 0.0,
+        
+        // Environment map intensity
+        envMapIntensity: 1.2,
+        
+        // Emissive properties
+        emissive: 0x000000,
+        emissiveIntensity: 0.0
     });
 }
 
@@ -834,50 +1076,139 @@ function disableHDRI() {
     document.getElementById('toggle-hdri-btn').innerHTML = '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg><span>HDRI</span>';
 }
 
+// HDRI Tone Mapping Functions
+function updateHDRIExposure() {
+    currentHDRIExposure = parseFloat(document.getElementById('hdri-exposure').value);
+    renderer.toneMappingExposure = currentHDRIExposure;
+    document.getElementById('hdri-exposure-value').textContent = currentHDRIExposure.toFixed(1);
+}
+
+function updateToneMapping() {
+    const toneMappingType = document.getElementById('tone-mapping').value;
+    currentToneMapping = toneMappingPresets[toneMappingType];
+    renderer.toneMapping = currentToneMapping;
+    document.getElementById('tone-mapping-value').textContent = toneMappingType;
+}
+
+// Removed HDRI rotation functions
+
 function toggleLightsRotation() {
     rotateLights = document.getElementById('rotate-lights').checked;
 }
 
+// Updated material update function with new parameters
 function updateMaterial() {
     if (crystalMeshes.length === 0) return;
 
+    // Basic properties
     const color = document.getElementById('material-color').value;
     const opacity = parseFloat(document.getElementById('material-opacity').value);
     const ior = parseFloat(document.getElementById('material-ior').value);
     const roughness = parseFloat(document.getElementById('material-roughness').value);
     const transmission = parseFloat(document.getElementById('material-transmission').value);
     const thickness = parseFloat(document.getElementById('material-thickness').value);
+    
+    // Clearcoat properties
+    const clearcoat = parseFloat(document.getElementById('material-clearcoat').value);
+    const clearcoatRoughness = parseFloat(document.getElementById('material-clearcoat-roughness').value);
+    
+    // Sheen properties
+    const sheen = parseFloat(document.getElementById('material-sheen').value);
+    const sheenRoughness = parseFloat(document.getElementById('material-sheen-roughness').value);
+    const sheenColor = document.getElementById('material-sheen-color').value;
+    
+    // Specular properties
+    const specularIntensity = parseFloat(document.getElementById('material-specular-intensity').value);
+    const specularColor = document.getElementById('material-specular-color').value;
+    
+    // Attenuation properties
+    const attenuationColor = document.getElementById('material-attenuation-color').value;
+    const attenuationDistance = parseFloat(document.getElementById('material-attenuation-distance').value);
+    
+    // Anisotropy properties
+    const anisotropy = parseFloat(document.getElementById('material-anisotropy').value);
+    const anisotropyRotation = parseFloat(document.getElementById('material-anisotropy-rotation').value);
+    
+    // Environment properties
+    const envMapIntensity = parseFloat(document.getElementById('material-env-intensity').value);
+    
+    // Emissive properties
+    const emissiveIntensity = parseFloat(document.getElementById('material-emissive-intensity').value);
+    const emissiveColor = document.getElementById('material-emissive-color').value;
 
+    // Update display values
     document.getElementById('color-value').textContent = color.toUpperCase();
     document.getElementById('opacity-value').textContent = opacity.toFixed(2);
     document.getElementById('ior-value').textContent = ior.toFixed(2);
     document.getElementById('roughness-value').textContent = roughness.toFixed(2);
     document.getElementById('transmission-value').textContent = transmission.toFixed(2);
     document.getElementById('thickness-value').textContent = thickness.toFixed(1);
+    document.getElementById('clearcoat-value').textContent = clearcoat.toFixed(2);
+    document.getElementById('clearcoat-roughness-value').textContent = clearcoatRoughness.toFixed(2);
+    document.getElementById('sheen-value').textContent = sheen.toFixed(2);
+    document.getElementById('sheen-roughness-value').textContent = sheenRoughness.toFixed(2);
+    document.getElementById('sheen-color-value').textContent = sheenColor.toUpperCase();
+    document.getElementById('specular-intensity-value').textContent = specularIntensity.toFixed(2);
+    document.getElementById('specular-color-value').textContent = specularColor.toUpperCase();
+    document.getElementById('attenuation-color-value').textContent = attenuationColor.toUpperCase();
+    document.getElementById('attenuation-distance-value').textContent = attenuationDistance.toFixed(1);
+    document.getElementById('anisotropy-value').textContent = anisotropy.toFixed(2);
+    document.getElementById('anisotropy-rotation-value').textContent = anisotropyRotation.toFixed(2);
+    document.getElementById('env-intensity-value').textContent = envMapIntensity.toFixed(1);
+    document.getElementById('emissive-intensity-value').textContent = emissiveIntensity.toFixed(1);
+    document.getElementById('emissive-color-value').textContent = emissiveColor.toUpperCase();
 
     crystalMeshes.forEach(crystalData => {
         const mesh = crystalData.mesh;
         const primitiveIndex = crystalData.primitiveIndex;
 
+        let material;
         if (primitiveIndex === -1) {
-            mesh.material.color.setStyle(color);
-            mesh.material.opacity = opacity;
-            mesh.material.ior = ior;
-            mesh.material.roughness = roughness;
-            mesh.material.transmission = transmission;
-            mesh.material.thickness = thickness;
-            mesh.material.needsUpdate = true;
+            material = mesh.material;
         } else if (Array.isArray(mesh.material)) {
-            if (mesh.material.length > primitiveIndex) {
-                const material = mesh.material[primitiveIndex];
-                material.color.setStyle(color);
-                material.opacity = opacity;
-                material.ior = ior;
-                material.roughness = roughness;
-                material.transmission = transmission;
-                material.thickness = thickness;
-                material.needsUpdate = true;
-            }
+            material = mesh.material[primitiveIndex];
+        } else {
+            material = mesh.material;
+        }
+
+        if (material) {
+            // Basic properties
+            material.color.setStyle(color);
+            material.opacity = opacity;
+            material.ior = ior;
+            material.roughness = roughness;
+            material.transmission = transmission;
+            material.thickness = thickness;
+            
+            // Clearcoat properties
+            material.clearcoat = clearcoat;
+            material.clearcoatRoughness = clearcoatRoughness;
+            
+            // Sheen properties
+            material.sheen = sheen;
+            material.sheenRoughness = sheenRoughness;
+            material.sheenColor.setStyle(sheenColor);
+            
+            // Specular properties
+            material.specularIntensity = specularIntensity;
+            material.specularColor.setStyle(specularColor);
+            
+            // Attenuation properties
+            material.attenuationColor.setStyle(attenuationColor);
+            material.attenuationDistance = attenuationDistance;
+            
+            // Anisotropy properties
+            material.anisotropy = anisotropy;
+            material.anisotropyRotation = anisotropyRotation;
+            
+            // Environment properties
+            material.envMapIntensity = envMapIntensity;
+            
+            // Emissive properties
+            material.emissive.setStyle(emissiveColor);
+            material.emissiveIntensity = emissiveIntensity;
+            
+            material.needsUpdate = true;
         }
     });
 }
@@ -913,19 +1244,51 @@ function applyPreset(presetName) {
     const preset = presets[presetName];
     if (!preset) return;
 
+    // Basic properties
     document.getElementById('material-color').value = preset.color;
     document.getElementById('material-opacity').value = preset.opacity;
     document.getElementById('material-ior').value = preset.ior;
     document.getElementById('material-roughness').value = preset.roughness;
     document.getElementById('material-transmission').value = preset.transmission;
     document.getElementById('material-thickness').value = preset.thickness;
+    
+    // Clearcoat properties
+    document.getElementById('material-clearcoat').value = preset.clearcoat;
+    document.getElementById('material-clearcoat-roughness').value = preset.clearcoatRoughness;
+    
+    // Sheen properties
+    document.getElementById('material-sheen').value = preset.sheen;
+    document.getElementById('material-sheen-roughness').value = preset.sheenRoughness;
+    document.getElementById('material-sheen-color').value = preset.sheenColor;
+    
+    // Specular properties
+    document.getElementById('material-specular-intensity').value = preset.specularIntensity;
+    document.getElementById('material-specular-color').value = preset.specularColor;
+    
+    // Attenuation properties
+    document.getElementById('material-attenuation-color').value = preset.attenuationColor;
+    document.getElementById('material-attenuation-distance').value = preset.attenuationDistance;
+    
+    // Anisotropy properties
+    document.getElementById('material-anisotropy').value = preset.anisotropy;
+    document.getElementById('material-anisotropy-rotation').value = preset.anisotropyRotation;
+    
+    // Environment properties
+    document.getElementById('material-env-intensity').value = preset.envMapIntensity;
+    
+    // Emissive properties
+    document.getElementById('material-emissive-intensity').value = preset.emissiveIntensity;
+    document.getElementById('material-emissive-color').value = preset.emissiveColor;
 
     updateMaterial();
 
     document.querySelectorAll('.preset-button').forEach(btn => {
         btn.classList.remove('active');
     });
-    document.querySelector(`[data-preset="${presetName}"]`).classList.add('active');
+    const presetButton = document.querySelector(`[data-preset="${presetName}"]`);
+    if (presetButton) {
+        presetButton.classList.add('active');
+    }
 }
 
 function resetMaterial() {
@@ -939,7 +1302,21 @@ function copySettings() {
         ior: document.getElementById('material-ior').value,
         roughness: document.getElementById('material-roughness').value,
         transmission: document.getElementById('material-transmission').value,
-        thickness: document.getElementById('material-thickness').value
+        thickness: document.getElementById('material-thickness').value,
+        clearcoat: document.getElementById('material-clearcoat').value,
+        clearcoatRoughness: document.getElementById('material-clearcoat-roughness').value,
+        sheen: document.getElementById('material-sheen').value,
+        sheenRoughness: document.getElementById('material-sheen-roughness').value,
+        sheenColor: document.getElementById('material-sheen-color').value,
+        specularIntensity: document.getElementById('material-specular-intensity').value,
+        specularColor: document.getElementById('material-specular-color').value,
+        attenuationColor: document.getElementById('material-attenuation-color').value,
+        attenuationDistance: document.getElementById('material-attenuation-distance').value,
+        anisotropy: document.getElementById('material-anisotropy').value,
+        anisotropyRotation: document.getElementById('material-anisotropy-rotation').value,
+        envMapIntensity: document.getElementById('material-env-intensity').value,
+        emissiveIntensity: document.getElementById('material-emissive-intensity').value,
+        emissiveColor: document.getElementById('material-emissive-color').value
     };
 
     navigator.clipboard.writeText(JSON.stringify(settings, null, 2))

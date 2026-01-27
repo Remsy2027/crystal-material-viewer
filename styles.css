@@ -160,7 +160,7 @@ body.day-mode .btn:hover {
     overflow: hidden;
 }
 
-/* Sidebar GUI */
+/* Sidebar GUI - FIXED SCROLLBAR */
 #gui-container {
     position: absolute;
     top: 100px;
@@ -174,8 +174,7 @@ body.day-mode .btn:hover {
     z-index: 90;
     max-height: calc(100vh - 140px);
     overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    overflow-x: hidden; /* Prevent horizontal scroll */
     display: none;
     animation: slideIn 0.3s ease-out;
 }
@@ -185,6 +184,7 @@ body.day-mode .btn:hover {
         opacity: 0;
         transform: translateX(20px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -196,21 +196,36 @@ body.day-mode #gui-container {
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
+/* Fixed scrollbar styling */
 #gui-container::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
+    height: 8px;
 }
 
 #gui-container::-webkit-scrollbar-track {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
 }
 
 #gui-container::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
+    border-radius: 4px;
+}
+
+#gui-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+body.day-mode #gui-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
 }
 
 body.day-mode #gui-container::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.2);
+}
+
+body.day-mode #gui-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
 }
 
 /* GUI Sections */
@@ -276,7 +291,7 @@ body.day-mode .gui-header.active {
     transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.gui-header.active + .gui-content {
+.gui-header.active+.gui-content {
     padding: 0 24px 24px 24px;
     max-height: 1000px;
 }
@@ -436,12 +451,12 @@ body.day-mode .gui-toggle-label {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-input:checked + .gui-toggle-slider {
+input:checked+.gui-toggle-slider {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-color: transparent;
 }
 
-input:checked + .gui-toggle-slider:before {
+input:checked+.gui-toggle-slider:before {
     transform: translateX(26px);
 }
 
@@ -458,12 +473,16 @@ input:checked + .gui-toggle-slider:before {
     grid-template-columns: 120px 1fr auto;
     align-items: center;
     gap: 16px;
+    min-height: 40px; /* Ensure consistent height */
 }
 
 .property-label {
     font-size: 14px;
     color: rgba(255, 255, 255, 0.9);
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 body.day-mode .property-label {
@@ -474,8 +493,9 @@ body.day-mode .property-label {
     font-size: 14px;
     color: rgba(255, 255, 255, 0.7);
     font-weight: 500;
-    min-width: 40px;
+    min-width: 50px;
     text-align: right;
+    white-space: nowrap;
 }
 
 body.day-mode .property-value {
@@ -589,27 +609,28 @@ body.day-mode .dropdown-content {
     border-top: none;
 }
 
-.dropdown-header.active + .dropdown-content {
-    max-height: 400px;
+.dropdown-header.active+.dropdown-content {
+    max-height: 500px; /* Increased for more content */
     padding: 16px;
+    overflow-y: auto; /* Enable scrolling inside dropdown */
 }
 
 /* Preset Grid */
 .preset-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
+    gap: 8px;
     margin-bottom: 20px;
 }
 
 .preset-button {
-    padding: 12px 8px;
+    padding: 10px 6px;
     background: rgba(255, 255, 255, 0.05);
     color: rgba(255, 255, 255, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
     text-align: center;
     transition: all 0.2s;
@@ -617,6 +638,7 @@ body.day-mode .dropdown-content {
     flex-direction: column;
     align-items: center;
     gap: 4px;
+    min-height: 60px; /* Fixed height for consistency */
 }
 
 body.day-mode .preset-button {
@@ -649,14 +671,15 @@ body.day-mode .preset-button.active {
 }
 
 .preset-icon {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     opacity: 0.8;
 }
 
 .preset-name {
-    font-size: 11px;
+    font-size: 10px;
     opacity: 0.9;
+    line-height: 1.2;
 }
 
 /* Action Buttons */
@@ -853,8 +876,13 @@ body.day-mode #footer {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Error Message */
@@ -881,6 +909,7 @@ body.day-mode #footer {
         opacity: 0;
         transform: translate(-50%, 20px);
     }
+
     to {
         opacity: 1;
         transform: translate(-50%, 0);
@@ -888,8 +917,54 @@ body.day-mode #footer {
 }
 
 /* File Input */
-#file-input, #hdri-input {
+#file-input,
+#hdri-input {
     display: none;
+}
+
+/* Select styling */
+.property-select {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    outline: none;
+}
+
+body.day-mode .property-select {
+    background: rgba(0, 0, 0, 0.1);
+    color: #1a1a1a;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.property-select:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.day-mode .property-select:hover {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(0, 0, 0, 0.3);
+}
+
+.property-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+/* Section separators for material properties */
+.property-row[style*="margin-top: 15px"] {
+    padding-top: 10px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+body.day-mode .property-row[style*="margin-top: 15px"] {
+    border-top: 1px dashed rgba(0, 0, 0, 0.1);
 }
 
 /* Responsive */
@@ -898,6 +973,7 @@ body.day-mode #footer {
         width: 340px;
         right: 16px;
         top: 90px;
+        max-height: calc(100vh - 120px);
     }
 
     .button-group {
@@ -910,7 +986,7 @@ body.day-mode #footer {
     }
 
     .preset-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
 
     .property-row {
@@ -923,15 +999,24 @@ body.day-mode #footer {
         gap: 8px;
         align-items: flex-start;
     }
+    
+    /* Improve scrollbar on mobile */
+    #gui-container::-webkit-scrollbar {
+        width: 6px;
+    }
 }
 
 @media (max-width: 480px) {
     #header {
         padding: 12px 16px;
+        flex-direction: column;
+        gap: 12px;
     }
 
     .button-group {
         gap: 6px;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .btn span:not(.icon) {
@@ -946,6 +1031,8 @@ body.day-mode #footer {
         width: calc(100vw - 32px);
         right: 16px;
         left: 16px;
+        top: 120px;
+        max-height: calc(100vh - 160px);
     }
 
     h1 {
@@ -955,4 +1042,64 @@ body.day-mode #footer {
     .preset-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    .property-row {
+        grid-template-columns: 90px 1fr auto;
+        gap: 8px;
+    }
+
+    .property-label {
+        font-size: 12px;
+    }
+
+    .property-value {
+        font-size: 12px;
+        min-width: 40px;
+    }
+    
+    .footer-instructions {
+        display: none; /* Hide instructions on very small screens */
+    }
+    
+    #footer {
+        justify-content: center;
+        text-align: center;
+        padding: 12px 16px;
+        font-size: 11px;
+    }
+}
+
+/* Scrollbar fix for Firefox */
+@supports (scrollbar-width: thin) {
+    #gui-container {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+    }
+    
+    body.day-mode #gui-container {
+        scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05);
+    }
+}
+
+/* Ensure dropdown content is scrollable when needed */
+.dropdown-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.dropdown-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dropdown-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dropdown-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+body.day-mode .dropdown-content::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
 }
